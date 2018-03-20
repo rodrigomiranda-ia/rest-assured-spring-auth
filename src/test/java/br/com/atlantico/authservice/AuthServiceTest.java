@@ -2,6 +2,8 @@ package br.com.atlantico.authservice;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import io.restassured.specification.RequestSpecification;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static io.restassured.RestAssured.*;
@@ -10,38 +12,87 @@ import static org.hamcrest.Matchers.*;
 
 public class AuthServiceTest {
 
-    private static String AUTH_SERVICE_URL = "http://localhost:8080";
+    final static String AUTH_SERVICE_URL = "http://localhost:8080";
+
+    final String oauthGrantType = "password";
+
+    final String usernameApi = "clientapi";
+    final String passwordApi = "clientapi";
+
+    final String usernameOauth = "admin";
+    final String passwordOauth = "admin";
+
+    final String oauthPath = "/oauth/token";
+
+    RequestSpecification oauthRequest;
 
     @BeforeClass
     public static void setup() {
         RestAssured.baseURI = AUTH_SERVICE_URL;
     }
 
+    @Before
+    public void before() {
+        oauthRequest = given().
+                contentType("application/x-www-form-urlencoded").
+                auth().basic(usernameApi, passwordApi);
+    }
+
     @Test
     public void successfulOauthTokenRequest() {
-        String clientId = "clientapi";
-        String usernameOauth = "admin";
-        String passwordOauth = "admin";
-        String oauthGrantType = "password";
-
-        String usernameApi = "clientapi";
-        String passwordApi = "clientapi";
-
-        given().
-            formParam("client_id", clientId).
+        oauthRequest.
             formParam("username", usernameOauth).
             formParam("password", passwordOauth).
             formParam("grant_type", oauthGrantType).
-            auth().basic(usernameApi, passwordApi).
-            contentType("application/x-www-form-urlencoded").
         when().
-            post("/oauth/token").
+            post(oauthPath).
         then().
             assertThat().statusCode(200).
             assertThat().contentType(ContentType.JSON).
             body("access_token", notNullValue()).
             body("token_type", equalTo("bearer")).
-            body("expires_in", equalTo(1799)).
             body("scope", equalTo("read write"));
+    }
+
+    @Test
+    public void testInvalidOauthUser() {
+        oauthRequest.
+            formParam("password", passwordOauth).
+            formParam("grant_type", oauthGrantType).
+        when().
+            post(oauthPath).
+        then().
+            assertThat().statusCode(400).
+            assertThat().contentType(ContentType.JSON).
+            body("error", equalTo("invalid_grant")).
+            body("error_description", equalTo("Bad credentials"));
+    }
+
+    @Test
+    public void testInvalidOauthPassword() {
+        oauthRequest.
+            formParam("username", usernameOauth).
+            formParam("grant_type", oauthGrantType).
+        when().
+            post(oauthPath).
+        then().
+            assertThat().statusCode(400).
+            assertThat().contentType(ContentType.JSON).
+            body("error", equalTo("invalid_grant")).
+            body("error_description", equalTo("Bad credentials"));
+    }
+
+    @Test
+    public void testInvalidOauthGrantType() {
+        oauthRequest.
+            formParam("username", usernameOauth).
+            formParam("password", passwordOauth).
+        when().
+            post(oauthPath).
+        then().
+            assertThat().statusCode(400).
+            assertThat().contentType(ContentType.JSON).
+            body("error", equalTo("invalid_request")).
+            body("error_description", equalTo("Missing grant type"));
     }
 }
