@@ -7,22 +7,21 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static io.restassured.RestAssured.*;
-import static io.restassured.matcher.RestAssuredMatchers.*;
 import static org.hamcrest.Matchers.*;
 
 public class AuthServiceTest {
 
     final static String AUTH_SERVICE_URL = "http://localhost:8080";
 
-    final String oauthGrantType = "password";
+    final String OAUTH_GRANT_TYPE = "password";
 
-    final String usernameApi = "clientapi";
-    final String passwordApi = "clientapi";
+    final String USERNAME_API = "clientapi";
+    final String PASSWORD_API = "clientapi";
 
-    final String usernameOauth = "admin";
-    final String passwordOauth = "admin";
+    final String USERNAME_OAUTH = "admin";
+    final String PASSWORD_OAUTH = "admin";
 
-    final String oauthPath = "/oauth/token";
+    final String OAUTH_PATH = "/oauth/token";
 
     RequestSpecification oauthRequest;
 
@@ -35,17 +34,17 @@ public class AuthServiceTest {
     public void before() {
         oauthRequest = given().
                 contentType("application/x-www-form-urlencoded").
-                auth().basic(usernameApi, passwordApi);
+                auth().basic(USERNAME_API, PASSWORD_API);
     }
 
     @Test
     public void successfulOauthTokenRequest() {
         oauthRequest.
-            formParam("username", usernameOauth).
-            formParam("password", passwordOauth).
-            formParam("grant_type", oauthGrantType).
+            formParam("username", USERNAME_OAUTH).
+            formParam("password", PASSWORD_OAUTH).
+            formParam("grant_type", OAUTH_GRANT_TYPE).
         when().
-            post(oauthPath).
+            post(OAUTH_PATH).
         then().
             assertThat().statusCode(200).
             assertThat().contentType(ContentType.JSON).
@@ -57,10 +56,10 @@ public class AuthServiceTest {
     @Test
     public void testInvalidOauthUser() {
         oauthRequest.
-            formParam("password", passwordOauth).
-            formParam("grant_type", oauthGrantType).
+            formParam("password", PASSWORD_OAUTH).
+            formParam("grant_type", OAUTH_GRANT_TYPE).
         when().
-            post(oauthPath).
+            post(OAUTH_PATH).
         then().
             assertThat().statusCode(400).
             assertThat().contentType(ContentType.JSON).
@@ -71,10 +70,10 @@ public class AuthServiceTest {
     @Test
     public void testInvalidOauthPassword() {
         oauthRequest.
-            formParam("username", usernameOauth).
-            formParam("grant_type", oauthGrantType).
+            formParam("username", USERNAME_OAUTH).
+            formParam("grant_type", OAUTH_GRANT_TYPE).
         when().
-            post(oauthPath).
+            post(OAUTH_PATH).
         then().
             assertThat().statusCode(400).
             assertThat().contentType(ContentType.JSON).
@@ -85,10 +84,10 @@ public class AuthServiceTest {
     @Test
     public void testInvalidOauthGrantType() {
         oauthRequest.
-            formParam("username", usernameOauth).
-            formParam("password", passwordOauth).
+            formParam("username", USERNAME_OAUTH).
+            formParam("password", PASSWORD_OAUTH).
         when().
-            post(oauthPath).
+            post(OAUTH_PATH).
         then().
             assertThat().statusCode(400).
             assertThat().contentType(ContentType.JSON).
